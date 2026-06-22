@@ -1,0 +1,16 @@
+{
+    "session_id": "c77fb77f-5a95-4935-9d5a-12953f29da89",
+    "application_reference" : "GRU-123090-2026",
+	"name": "Andy James Smith-Jones",
+	"email": "andy.smith.jones@example.com",
+    "gender": "other",
+    "date_of_birth": "1985-06-20",
+    "phone_number": "0001",
+    "mobile_number": "07777777777",
+	"address": {
+		"address_line_1": "1 The Avenue",
+		"address_line_2": "Bristol",
+		"postcode": "BS1 1AA",
+		"country": "United Kingdom"
+	}
+}

@@ -1,0 +1,17 @@
+{
+    "session_id": "c8267b77-d796-451e-9948-e82f56412b56",
+    "application_reference" : "GRU-123089-2026",
+	"name": "John Doe",
+	"email": "john.doe@example.com",
+    "gender": "male",
+    "date_of_birth": "1990-01-01",
+    "phone_number": "07123456789",
+    "mobile_number": "07123456789",
+	"address": {
+		"address_line_1": "Stratford Village Surgery",
+		"address_line_2": "50C Romford Road",
+		"address_line_3": "London",
+		"postcode": "E15 4BZ",
+		"country": "United Kingdom"
+	}
+}
