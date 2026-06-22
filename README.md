@@ -11,11 +11,11 @@ The system stores raw payloads, validates the current provider contract at runti
 - `POST /retry` retries all retryable forms, optionally filtered by status.
 - `GET /forms/:id` reads one stored form.
 - `GET /forms` lists stored forms, optionally filtered by status.
-- SQLite persistence for raw ingests, transformed forms, and email notification state.
+- SQLite persistence for raw ingests, transformed forms, and email notification state (Love SQLite, wonder how it's Rust port will turn out (Turso), almost wanted to use it).
 - Runtime schema validation with `zod`.
 - Idempotency through database uniqueness constraints and payload hashing.
 - Structured validation failure details for schema drift investigation.
-- Deterministic transformation from the ingested schema to the FORM-BOT schema.
+- Deterministic transformation from the ingested schema to the FORM-BOT schema. (Between this an validation, I'd automatically transform unstructured/changed to structured/accepted with models and optional human review, using workers).
 - Retryable handling for validation, geocoding, transformation, and email failures.
 - Tests covering happy path, duplicates, schema drift, empty requests, retry flows, filtering, and read endpoints.
 
@@ -29,7 +29,7 @@ This implementation prioritizes:
 - **Idempotency**: duplicate submissions do not create duplicate transformed forms or duplicate notification records.
 - **Retryability**: failures are recorded with status and error details so they can be retried after a transient recovery or code change.
 - **Determinism**: schema validation and transformation are explicit code paths, not AI guesses.
-- **Auditability**: each form has a clear processing status and stored error details.
+- **Auditability**: each form has a clear processing status and stored error details (Tools/packages like better-result or neverthrow are particularly good for similar worker based systems).
 
 ## Data Model
 
@@ -90,7 +90,7 @@ Validation failures include structured issues:
 
 ## Running Locally
 
-Install dependencies:
+Install dependencies (I love bun, yes):
 
 ```bash
 bun install
@@ -158,7 +158,7 @@ curl -X POST "http://localhost:3000/retry?status=email_failed"
 
 ## Deterministic Failure Testing
 
-The provided mock providers are intentionally flaky. For manual testing and demos, failures can be forced with environment variables.
+The provided mock providers are intentionally flaky (but only 5% of the time). For manual testing and demos, failures can be forced with environment variables.
 
 Force postcode lookup failure:
 
@@ -176,27 +176,24 @@ Then ingest a form and retry it after restarting without the failure variable.
 
 ## Trade-Offs
 
-This is intentionally a compact v1. Processing currently happens synchronously inside the request path so the behavior is easy to inspect and test for a take-home submission.
+This is intentionally a compact v1. Processing currently happens synchronously inside the request path so the behavior is easy to inspect and test for a take home submission.
 
 For production, I would split ingestion and processing:
 
 - `/ingest` would persist the raw payload and return quickly.
-- Background workers would validate, geocode, transform, notify, and deliver to FORM-BOT.
+- Background workers would validate, geocode, transform, notify, and deliver to FORM-BOT and all of these systems would be quite interesting themselves.
 - External side effects would use durable outbox records and idempotency keys.
 - Failed jobs would retry with backoff and max-attempt limits.
-- Repeated failures would move to a poison queue for human/AI-assisted review rather than retrying forever.
+- Repeated failures would move to a poison queue for human/AI review rather than retrying forever.
 
 ## Production Improvements With More Time
 
 - **Transactional outbox and worker processing**: avoid request timeouts and make provider/email side effects crash-safe.
 - **FORM-BOT delivery table**: model delivery to the bot separately from transformation so "ready" and "delivered" are distinct states.
 - **Append-only audit log**: preserve every status transition for healthcare traceability.
-- **Poison queue**: after repeated failures, route forms for human/AI-assisted review.
+- **Poison queue**: after repeated failures, route forms for human/AI review.
 - **Schema versioning**: record the provider schema version or inferred contract version for long-term explainability.
 - **Observability**: metrics and alerts for duplicate rate, validation failures, geocoding failures, email failures, and retry volume.
 - **PII controls**: redact sensitive values from logs, restrict DB access, and define data retention behavior.
 - **Pagination**: add pagination to `GET /forms` before the table grows.
 
-## Submission Notes
-
-The implementation is deterministic by design. AI is not used in the correctness path. If AI were introduced in production, it would be limited to assisting review of quarantined payloads, never making unaudited decisions about healthcare form correctness.
